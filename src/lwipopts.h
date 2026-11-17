@@ -1,0 +1,129 @@
+#ifndef __LWIPOPTS_H__
+#define __LWIPOPTS_H__
+
+#define NO_SYS 0
+
+// We are using the socket API (socket(), sendto(), etc.)
+#define LWIP_SOCKET 1
+
+// Netconn is the backend for Sockets
+#define LWIP_NETCONN 1
+
+#define LWIP_TIMEVAL_PRIVATE 0
+
+// --- Memory Configuration ---
+#define MEM_LIBC_MALLOC 0
+#define MEM_ALIGNMENT 4
+#define MEM_SIZE (16 * 1024)
+#define MEMP_MEM_MALLOC         0           // Use mem_malloc for pool allocations
+
+#define MEMP_NUM_TCP_SEG 16
+#define MEMP_NUM_ARP_QUEUE 10
+#define PBUF_POOL_SIZE 24
+
+// [CRITICAL] Enable multiple interfaces (WiFi + Eth)
+#define MEMP_NUM_NETIF      2   // Allow 2 interfaces
+
+// --- Protocols ---
+#define LWIP_ARP 1
+#define LWIP_ETHERNET 1
+#define LWIP_ICMP 1
+#define LWIP_RAW 1
+#define LWIP_CHKSUM_ALGORITHM 3
+#define LWIP_DHCP 1
+#define LWIP_IPV4 1
+#define LWIP_TCP 1
+#define LWIP_UDP 1
+#define LWIP_DNS 1
+#define LWIP_TCP_KEEPALIVE 1
+
+// --- TCP Tuning ---
+#define TCP_WND (4 * TCP_MSS)
+#define TCP_MSS 536
+#define TCP_SND_BUF (4 * TCP_MSS)
+#define TCP_SND_QUEUELEN ((4 * (TCP_SND_BUF) + (TCP_MSS - 1)) / (TCP_MSS))
+
+// --- FreeRTOS Threading Options (REQUIRED for NO_SYS=0) ---
+#define TCPIP_THREAD_NAME "TCP/IP"
+#define TCPIP_THREAD_STACKSIZE 8*1024
+#define TCPIP_THREAD_PRIO 3
+#define DEFAULT_THREAD_PRIO     3
+#define TCPIP_MBOX_SIZE 16
+
+// Add these for thread safety:
+#define LWIP_TCPIP_CORE_LOCKING 1
+#define LWIP_COMPAT_MUTEX_ALLOWED 1
+
+#define DEFAULT_THREAD_STACKSIZE 1024
+#define DEFAULT_RAW_RECVMBOX_SIZE 8
+#define DEFAULT_UDP_RECVMBOX_SIZE 8
+#define DEFAULT_TCP_RECVMBOX_SIZE 8
+#define DEFAULT_ACCEPTMBOX_SIZE 8
+
+// --- Optional / Debug ---
+#define LWIP_NETIF_STATUS_CALLBACK 1
+#define LWIP_NETIF_LINK_CALLBACK 1
+#define LWIP_NETIF_HOSTNAME 1
+#define LWIP_NETIF_TX_SINGLE_PBUF 1
+
+#define DHCP_DOES_ARP_CHECK 0
+#define LWIP_DHCP_DOES_ACD_CHECK 0
+
+#ifndef NDEBUG
+#define LWIP_DEBUG 1
+#define LWIP_STATS 1
+#define LWIP_STATS_DISPLAY 1
+#endif
+
+// Keep debugs off to save space
+#define ETHARP_DEBUG LWIP_DBG_OFF
+#define NETIF_DEBUG LWIP_DBG_OFF
+#define PBUF_DEBUG LWIP_DBG_OFF
+#define API_LIB_DEBUG LWIP_DBG_OFF
+#define API_MSG_DEBUG LWIP_DBG_OFF
+#define SOCKETS_DEBUG LWIP_DBG_OFF
+#define ICMP_DEBUG LWIP_DBG_OFF
+#define INET_DEBUG LWIP_DBG_OFF
+#define IP_DEBUG LWIP_DBG_OFF
+#define IP_REASS_DEBUG LWIP_DBG_OFF
+#define RAW_DEBUG LWIP_DBG_OFF
+#define MEM_DEBUG LWIP_DBG_OFF
+#define MEMP_DEBUG LWIP_DBG_OFF
+#define SYS_DEBUG LWIP_DBG_OFF
+#define TCP_DEBUG LWIP_DBG_OFF
+#define TCP_INPUT_DEBUG LWIP_DBG_OFF
+#define TCP_OUTPUT_DEBUG LWIP_DBG_OFF
+#define TCP_RTO_DEBUG LWIP_DBG_OFF
+#define TCP_CWND_DEBUG LWIP_DBG_OFF
+#define TCP_WND_DEBUG LWIP_DBG_OFF
+#define TCP_FR_DEBUG LWIP_DBG_OFF
+#define TCP_QLEN_DEBUG LWIP_DBG_OFF
+#define TCP_RST_DEBUG LWIP_DBG_OFF
+#define UDP_DEBUG LWIP_DBG_OFF
+#define TCPIP_DEBUG LWIP_DBG_OFF
+#define PPP_DEBUG LWIP_DBG_OFF
+#define SLIP_DEBUG LWIP_DBG_OFF
+#define DHCP_DEBUG LWIP_DBG_OFF
+
+// Force the TCPIP thread to stay on Core 0 with the uROS task
+#define TCPIP_THREAD_SET_AFFINITY(target_task_handle) \
+        vTaskCoreAffinitySet(target_task_handle, (1 << 0))
+
+#include <stdio.h> // Required for printf
+#include "pico/stdlib.h" // Required for sleep_ms
+
+// 1. Undefine the default (which is usually just 'panic' or empty)
+#ifdef LWIP_PLATFORM_ASSERT
+#undef LWIP_PLATFORM_ASSERT
+#endif
+
+// 2. Define a verbose version that FLUSHES the serial port
+#define LWIP_PLATFORM_ASSERT(x) do { \
+    printf("\n[LWIP FATAL] Assertion \"%s\" failed at line %d in %s\n", \
+    x, __LINE__, __FILE__); \
+    fflush(stdout); \
+    sleep_ms(100); \
+    while(1) { tight_loop_contents(); } \
+} while(0)
+
+#endif /* __LWIPOPTS_H__ */
